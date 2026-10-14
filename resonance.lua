@@ -17486,6 +17486,7 @@ do
 							ControllingSomeone = false,
 							AutoClicker = false,
 							RagdollInAC = true,
+							IncludeDecoysAC = false,
 							IndependentACPoses = false,
 							CustomACPoseCenter = false,
 							PlayerESP = false,
@@ -17642,6 +17643,7 @@ do
 							},
 							AutoClicker = {},
 							AutoClickerTargetPoses = {},
+							DecoyRagdollState = {},
 							SelectedACPoseCenters = {},
 							CustomACPresets = {},
 							ACOffset = {
@@ -18559,6 +18561,13 @@ do
 										obj[arg] = nil
 									end
 
+									if typeof(arg) == "Instance" and arg:IsA("Model") then
+										local decoyRoot = arg:FindFirstChild("realHrp") or arg:FindFirstChild("HumanoidRootPart")
+										local decoyHum = arg:FindFirstChild("Humanoid")
+										obj[arg] = { Character = arg, RootPart = decoyRoot, Humanoid = decoyHum }
+										return arg, decoyRoot, decoyHum
+									end
+
 									local character = arg.Character
 
 									if character then
@@ -18573,7 +18582,81 @@ do
 					end
 
 					do
-						tbl12.ToggleMotor6D = function(arg, enabled, arg2)
+												tbl12.IsDecoyModel = function(arg)
+							if not arg or typeof(arg) ~= "Instance" or not arg:IsA("Model") then
+								return false
+							end
+							local toys = workspace:FindFirstChild(localPlayer.Name .. "SpawnedInToys")
+							if not toys or arg.Parent ~= toys then
+								return false
+							end
+							if arg.Name == "YouDecoy" then
+								return true
+							end
+							return arg:FindFirstChild("Torso") ~= nil and arg:FindFirstChild("HumanoidRootPart") ~= nil
+						end
+						
+						tbl12.GetACDecoys = function()
+							local found = {}
+							local toys = workspace:FindFirstChild(localPlayer.Name .. "SpawnedInToys")
+							if not toys then
+								return found
+							end
+							for _, child in ipairs(toys:GetChildren()) do
+								if tbl12.IsDecoyModel(child) then
+									found[#found + 1] = child
+								end
+							end
+							return found
+						end
+						
+						tbl12.GetACDecoyTargets = function(base)
+							local merged = {}
+							if base then
+								for k, v in pairs(base) do
+									merged[k] = v
+								end
+							end
+							for _, m in ipairs(tbl12.GetACDecoys()) do
+								merged[m] = true
+							end
+							return merged
+						end
+						
+						tbl12.ACPosesKey = function(arg)
+							if typeof(arg) == "Instance" and arg:IsA("Player") then
+								return arg.UserId
+							end
+							return arg
+						end
+						
+						tbl12.SetDecoyRagdoll = function(arg, ragdolled)
+							if not arg or not arg.Parent then
+								return
+							end
+							local torso = arg:FindFirstChild("Torso")
+							if not torso then
+								return
+							end
+							for _, joint in ipairs(torso:GetChildren()) do
+								if joint:IsA("Motor6D") then
+									joint.Enabled = not ragdolled
+								end
+							end
+							if ragdolled then
+								for _, name in ipairs({ "Left Leg", "Right Leg", "Left Arm", "Right Arm", "Head" }) do
+									local limb = arg:FindFirstChild(name)
+									local bsc = limb and limb:FindFirstChild("BallSocketConstraint")
+									if bsc then
+										bsc.Enabled = true
+										bsc.LimitsEnabled = false
+										bsc.TwistLimitsEnabled = false
+									end
+								end
+							end
+						end
+						
+tbl12.ToggleMotor6D = function(arg, enabled, arg2)
 							if not arg then
 								return
 							end
@@ -29054,7 +29137,7 @@ end
 					end
 
 					if arg then
-						tbl7.AutoClickerTargetPoses[arg.UserId] = tbl16
+						tbl7.AutoClickerTargetPoses[tbl12.ACPosesKey(arg)] = tbl16
 					end
 
 					return tbl16
@@ -29064,7 +29147,7 @@ end
 					if not tbl8.IndependentACPoses or arg == tbl9.SelectedACPoseTarget then
 						return tbl9.AutoClickerOffset, tbl7.ACRotation, tbl7.ACOffset
 					end
-					local v22 = tbl7.AutoClickerTargetPoses[arg.UserId] or tbl12.CaptureACPose(arg)
+					local v22 = tbl7.AutoClickerTargetPoses[tbl12.ACPosesKey(arg)] or tbl12.CaptureACPose(arg)
 					return v22.BodyOffset, v22.Rotation, v22.LimbOffsets
 				end
 
@@ -34291,6 +34374,10 @@ Escape Timer: %*]]
 
 			while task.wait() do
 				local selectedPlayersAC = tbl7.SelectedPlayersAC
+				if tbl8.IncludeDecoysAC then
+					tbl7.DecoyRagdollState = tbl7.DecoyRagdollState or {}
+					selectedPlayersAC = tbl12.GetACDecoyTargets(selectedPlayersAC)
+				end
 
 				if flag11 then
 					for k in selectedPlayersAC, nil, nil do
@@ -34304,6 +34391,12 @@ Escape Timer: %*]]
 					if not selectedPlayersAC[k] then
 						fn22(k)
 						tbl16[k] = nil
+					end
+				end
+				for m in pairs(tbl7.DecoyRagdollState or {}) do
+					if not m.Parent or not tbl8.AutoClicker or not tbl8.IncludeDecoysAC or not selectedPlayersAC[m] then
+						tbl7.DecoyRagdollState[m] = nil
+						task.spawn(tbl12.SetDecoyRagdoll, m, false)
 					end
 				end
 
@@ -34564,6 +34657,16 @@ Escape Timer: %*]]
 
 										if tbl8.RagdollInAC and ragdolled and not ragdolled.Value then
 											task.spawn(tbl12.Ragdoll, v27)
+											if tbl12.IsDecoyModel(v27) then
+												tbl7.DecoyRagdollState = tbl7.DecoyRagdollState or {}
+												if tbl8.RagdollInAC and not tbl7.DecoyRagdollState[v27] then
+													tbl7.DecoyRagdollState[v27] = true
+													task.spawn(tbl12.SetDecoyRagdoll, v27, true)
+												elseif not tbl8.RagdollInAC and tbl7.DecoyRagdollState[v27] then
+													tbl7.DecoyRagdollState[v27] = nil
+													task.spawn(tbl12.SetDecoyRagdoll, v27, false)
+												end
+											end
 										end
 									end
 								end
@@ -37032,6 +37135,56 @@ Escape Timer: %*]]
 		tbl12.CreateLoopToggle(Apply, "LoopApplyMethodTServ", "LoopApplyMethodTServer", true, false, tbl7.SelectedPlayers)
 		tbl12.CreateApplyButton(Apply, false, false, tbl7.SelectedPlayers)
 		tbl12.CreateApplyButton(Apply, true, false, tbl7.SelectedPlayers)
+		Apply:AddToggle("ViewTarget", {
+			Text = "View Target",
+			Default = false,
+			Tooltip = "Spectate the first selected target",
+			Callback = function()
+				task.spawn(function()
+					while toggles.ViewTarget.Value and task.wait() do
+						local _, _, localHum = tbl12.Char()
+						local targetPlayer = nil
+						for pl in pairs(tbl7.SelectedPlayers) do targetPlayer = pl break end
+						if targetPlayer == nil and options.TargetDropdown and options.TargetDropdown.Value then
+							for pl in pairs(options.TargetDropdown.Value) do targetPlayer = pl break end
+						end
+						local _, _, targetHum = nil, nil, nil
+						if targetPlayer then _, _, targetHum = tbl12.Char(targetPlayer) end
+						if localHum and targetHum and targetHum.Parent then
+							currentCamera.CameraSubject = targetHum
+						elseif localHum then
+							currentCamera.CameraSubject = localHum
+						end
+					end
+					local _, _, localHum = tbl12.Char()
+					if localHum then
+						currentCamera.CameraSubject = localHum
+					end
+				end)
+			end,
+		}):AddKeyPicker("ViewTargetKey", { Text = "View Target", Mode = "Toggle", NoUI = true, SyncToggleState = true })
+		Apply:AddButton({
+			Text = "TP To Target",
+			Tooltip = "Teleport to the first selected target",
+			Func = function()
+				local myRoot = select(2, tbl12.Char())
+				local targetPlayer = nil
+				for pl in pairs(tbl7.SelectedPlayers) do targetPlayer = pl break end
+				if targetPlayer == nil and options.TargetDropdown and options.TargetDropdown.Value then
+					for pl in pairs(options.TargetDropdown.Value) do targetPlayer = pl break end
+				end
+				if not targetPlayer then
+					fn18("No target selected!")
+					return
+				end
+				local _, targetRoot = tbl12.Char(targetPlayer)
+				if myRoot and targetRoot then
+					tbl12.Teleport(myRoot, targetRoot.CFrame * CFrame.new(0, 0, 2))
+				else
+					fn18("Target character not found!")
+				end
+			end,
+		})
 	end
 
 	do
@@ -40326,6 +40479,15 @@ Escape Timer: %*]]
 			end,
 		})
 
+		Config:AddToggle("IncludeDecoysAC", {
+			Text = "Include Decoys",
+			Default = false,
+			Tooltip = "Applies every Auto-Clicker function to ALL YouDecoy models in your SpawnedInToys folder, and ragdolls them like players",
+			Callback = function(arg)
+				tbl8.IncludeDecoysAC = arg
+			end,
+		})
+
 		Config:AddToggle("IndependentACPoses", {
 			Text = "Independent Target Poses",
 			Default = false,
@@ -40399,7 +40561,7 @@ Escape Timer: %*]]
 				if k and k.Parent then
 					tbl16[#tbl16 + 1] = k.Name
 
-					if tbl8.IndependentACPoses and not tbl7.AutoClickerTargetPoses[k.UserId] then
+					if tbl8.IndependentACPoses and not tbl7.AutoClickerTargetPoses[tbl12.ACPosesKey(k)] then
 						tbl12.CaptureACPose(k)
 					end
 				end
