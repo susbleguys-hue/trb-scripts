@@ -20760,7 +20760,23 @@ end
 										end
 									end
 
+									local stickyWeld = v25:FindFirstChild("StickyWeld")
+
+									if stickyWeld then
+										stickyWeld:Destroy()
+									end
+
 									local parent2 = v25.Parent and tbl12.FindNicePart(v25.Parent)
+
+									if not parent2 then
+										local assemblyRoot = v25.AssemblyRootPart
+
+										if assemblyRoot and assemblyRoot ~= v25 and not assemblyRoot.Anchored then
+											parent2 = assemblyRoot
+										elseif not v25.Anchored then
+											parent2 = v25
+										end
+									end
 
 									if parent2 then
 										if not parent2:IsDescendantOf(workspace.PlotItems) then
