@@ -1,5 +1,3 @@
-setfpscap(999)
-
 print([[
 
 		░██████╗██╗░░██╗██╗██████╗░
@@ -68,24 +66,38 @@ end)
 
 SpawnToy = function(arg, arg2)
 	task.spawn(function()
-		ReplicatedStorage.MenuToys.SpawnToyRemoteFunction:InvokeServer(arg, arg2, Vector3.zero)
+		local menuToys = ReplicatedStorage:FindFirstChild("MenuToys")
+		local spawnToyRemoteFunction = menuToys and menuToys:FindFirstChild("SpawnToyRemoteFunction")
+		if not spawnToyRemoteFunction then
+			warn("[nile] missing: ReplicatedStorage.MenuToys.SpawnToyRemoteFunction")
+			return
+		end
+		spawnToyRemoteFunction:InvokeServer(arg, arg2, Vector3.zero)
 	end)
 end
 
 GetPlot = function()
-	if not workspace.PlotItems.PlayersInPlots:FindFirstChild(LocalPlayer.Name) then
+	local plotItems = workspace:FindFirstChild("PlotItems")
+	local playersInPlots = plotItems and plotItems:FindFirstChild("PlayersInPlots")
+	if not playersInPlots or not playersInPlots:FindFirstChild(LocalPlayer.Name) then
 		return false
 	end
 
-	for _, v26 in workspace.Plots:GetChildren() do
-		local thisPlotsOwners = v26:FindFirstChild("PlotSign"):FindFirstChild("ThisPlotsOwners")
+	local plots = workspace:FindFirstChild("Plots")
+	if not plots then
+		return false
+	end
+
+	for _, v26 in plots:GetChildren() do
+		local plotSign = v26:FindFirstChild("PlotSign")
+		local thisPlotsOwners = plotSign and plotSign:FindFirstChild("ThisPlotsOwners")
 
 		if thisPlotsOwners then
 			for _, v27 in thisPlotsOwners:GetChildren() do
 				if v27.Value ~= LocalPlayer.Name then
 					continue
 				end
-				local v28 = workspace.PlotItems:FindFirstChild(v26.Name)
+				local v28 = plotItems:FindFirstChild(v26.Name)
 				if v28 then
 					return true, v28
 				end
@@ -111,7 +123,11 @@ NewToy = function(arg, arg2)
 	task.spawn(function()
 		while true do
 			task.spawn(function()
-				ReplicatedStorage.MenuToys.SpawnToyRemoteFunction:InvokeServer(arg, arg2, Vector3.zero)
+				local menuToys = ReplicatedStorage:FindFirstChild("MenuToys")
+				local spawnToyRemoteFunction = menuToys and menuToys:FindFirstChild("SpawnToyRemoteFunction")
+				if spawnToyRemoteFunction then
+					spawnToyRemoteFunction:InvokeServer(arg, arg2, Vector3.zero)
+				end
 			end)
 
 			task.wait(0.1)
@@ -132,7 +148,13 @@ NewToy = function(arg, arg2)
 end
 
 DestroyT = function(arg)
-	ReplicatedStorage.MenuToys.DestroyToy:FireServer(arg or toysFolder:FindFirstChildWhichIsA("Model"))
+	local menuToys = ReplicatedStorage:FindFirstChild("MenuToys")
+	local destroyToy = menuToys and menuToys:FindFirstChild("DestroyToy")
+	if not destroyToy then
+		warn("[nile] missing: ReplicatedStorage.MenuToys.DestroyToy")
+		return
+	end
+	destroyToy:FireServer(arg or toysFolder:FindFirstChildWhichIsA("Model"))
 end
 
 GetCharPart = function(arg, arg2)
@@ -258,7 +280,10 @@ for _, v26 in workspace.Plots:GetChildren() do
 		end
 	end
 
-	v26.PlotArea.CanQuery = false
+	local plotArea = v26:FindFirstChild("PlotArea")
+	if plotArea then
+		plotArea.CanQuery = false
+	end
 end
 
 local function fn16()
@@ -938,8 +963,40 @@ GBM:AddToggle("InfiniteExtendToggle", {
 })
 
 AutoGamepass = nil
-FurtherReachBoughtNotifier = ReplicatedStorage.GamepassEvents.FurtherReachBoughtNotifier
-LimitedTimeToyEvent = ReplicatedStorage.MenuToys.LimitedTimeToyEvent
+FurtherReachBoughtNotifier = (function()
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local gamepassEvents = ReplicatedStorage:FindFirstChild("GamepassEvents")
+	local real = gamepassEvents and gamepassEvents:FindFirstChild("FurtherReachBoughtNotifier")
+	if real then return real end
+	warn("[nile] FurtherReachBoughtNotifier not found - related features disabled.")
+	local stub
+	stub = setmetatable({}, {
+		__index = function(_, key)
+			if type(key) == "number" then return nil end
+			return function() return stub end
+		end,
+		__call = function() return stub end,
+		__newindex = function() end,
+	})
+	return stub
+end)()
+LimitedTimeToyEvent = (function()
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local menuToys = ReplicatedStorage:FindFirstChild("MenuToys")
+	local real = menuToys and menuToys:FindFirstChild("LimitedTimeToyEvent")
+	if real then return real end
+	warn("[nile] LimitedTimeToyEvent not found - related features disabled.")
+	local stub
+	stub = setmetatable({}, {
+		__index = function(_, key)
+			if type(key) == "number" then return nil end
+			return function() return stub end
+		end,
+		__call = function() return stub end,
+		__newindex = function() end,
+	})
+	return stub
+end)()
 
 GBM:AddToggle("FartherReachToggle", {
 	Text = "Farther Reach",
@@ -1065,7 +1122,14 @@ GBM:AddToggle("Strong", {
 	Text = "Massless Grab",
 	Default = false,
 	Callback = function(arg)
-		local dragPart = game.ReplicatedFirst.GrabParts.DragPart
+		local replicatedFirst = game:FindFirstChild("ReplicatedFirst")
+		local grabParts = replicatedFirst and replicatedFirst:FindFirstChild("GrabParts")
+		local dragPart = grabParts and grabParts:FindFirstChild("DragPart")
+
+		if not dragPart then
+			warn("[nile] missing: ReplicatedFirst.GrabParts.DragPart")
+			return
+		end
 
 		if arg then
 			dragPart.AlignPosition.ForceLimitMode = 1
@@ -2022,7 +2086,15 @@ DF:AddToggle("AntiBurn", {
 	Default = false,
 	Callback = function(arg)
 		if arg then
-			local plotBarrier = workspace.Plots.Plot3.Barrier.PlotBarrier
+			local plot3 = workspace:FindFirstChild("Plots") and workspace.Plots:FindFirstChild("Plot3")
+			local barrier = plot3 and plot3:FindFirstChild("Barrier")
+			local plotBarrier = barrier and barrier:FindFirstChild("PlotBarrier")
+
+			if not plotBarrier then
+				warn("[nile] missing: workspace.Plots.Plot3.Barrier.PlotBarrier")
+				return
+			end
+
 			local cFrame = plotBarrier.CFrame
 
 			AntiBurnConn = RunService.Heartbeat:Connect(function()
@@ -2315,7 +2387,11 @@ DF:AddToggle("AntiLag", {
 	Callback = function(arg)
 		if arg then
 			AntiLagg = true
-			LocalPlayer.PlayerScripts.CharacterAndBeamMove.Disabled = true
+			local characterAndBeamMove = LocalPlayer:FindFirstChild("PlayerScripts") and LocalPlayer.PlayerScripts:FindFirstChild("CharacterAndBeamMove")
+
+			if characterAndBeamMove then
+				characterAndBeamMove.Disabled = true
+			end
 
 			for _, v27 in P:GetPlayers() do
 				if v27 ~= LocalPlayer and v27.Character and v27.Character:FindFirstChild("GrabParts") then
@@ -2324,7 +2400,11 @@ DF:AddToggle("AntiLag", {
 			end
 		else
 			AntiLagg = false
-			LocalPlayer.PlayerScripts.CharacterAndBeamMove.Disabled = false
+			local characterAndBeamMove = LocalPlayer:FindFirstChild("PlayerScripts") and LocalPlayer.PlayerScripts:FindFirstChild("CharacterAndBeamMove")
+
+			if characterAndBeamMove then
+				characterAndBeamMove.Disabled = false
+			end
 		end
 	end,
 }):AddKeyPicker("ToggleAntiLag", {
@@ -8233,7 +8313,11 @@ CM:AddToggle("DisableBlur", {
 	Text = "Disable Ragdoll Blur",
 	Default = false,
 	Callback = function(arg)
-		workspace.Camera.Blur.Enabled = not arg
+		local blur = workspace.CurrentCamera and workspace.CurrentCamera:FindFirstChild("Blur")
+
+		if blur then
+			blur.Enabled = not arg
+		end
 	end,
 })
 
@@ -8547,8 +8631,16 @@ MP:AddToggle("Shaders", {
 			Instance.new("SunRaysEffect", Lighting).Intensity = 0.1
 		else
 			Lighting.ClockTime = 14
-			Lighting.Blur:Destroy()
-			Lighting.SunRays:Destroy()
+			local blur = Lighting:FindFirstChild("Blur")
+			local sunRays = Lighting:FindFirstChild("SunRays")
+
+			if blur then
+				blur:Destroy()
+			end
+
+			if sunRays then
+				sunRays:Destroy()
+			end
 		end
 	end,
 })
