@@ -1945,40 +1945,47 @@ local now2
 				end
 
 				cons.antiblob = workspace.DescendantAdded:Connect(function(descendant)
-					if descendant.Name == "CreatureBlobman" and (not inv or not descendant:IsDescendantOf(inv)) then
-						local rightDetector = descendant:WaitForChild("RightDetector", 5)
-						local leftDetector = descendant:WaitForChild("LeftDetector", 5)
-
-						if rightDetector and leftDetector then
-							local rightAlignOrientation = rightDetector:WaitForChild("RightAlignOrientation", 2)
-							local rightWeld = rightDetector:WaitForChild("RightWeld", 2)
-							local leftAlignOrientation = leftDetector:WaitForChild("LeftAlignOrientation", 2)
-							local leftWeld = leftDetector:WaitForChild("LeftWeld", 2)
-
-							if rightAlignOrientation then
-								rightAlignOrientation.Enabled = false
-							end
-
-							if rightWeld then
-								rightWeld.Enabled = false
-							end
-
-							if leftAlignOrientation then
-								leftAlignOrientation.Enabled = false
-							end
-
-							if leftWeld then
-								leftWeld.Enabled = false
-							end
+					local ok, err = pcall(function()
+						if descendant.Name ~= "CreatureBlobman" then
+							return
 						end
+						if inv and descendant:IsDescendantOf(inv) then
+							return
+						end
+
+						local rightDetector = descendant:WaitForChild("RightDetector", 5)
+						local leftDetector  = descendant:WaitForChild("LeftDetector", 5)
+						if not (rightDetector and leftDetector) then
+							return
+						end
+
+						local rightAlignOrientation = rightDetector:WaitForChild("RightAlignOrientation", 2)
+						local rightWeld             = rightDetector:WaitForChild("RightWeld", 2)
+						local leftAlignOrientation  = leftDetector:WaitForChild("LeftAlignOrientation", 2)
+						local leftWeld              = leftDetector:WaitForChild("LeftWeld", 2)
+
+						if rightAlignOrientation then
+							rightAlignOrientation.Enabled = false
+						end
+						if rightWeld then
+							rightWeld.Enabled = false
+						end
+						if leftAlignOrientation then
+							leftAlignOrientation.Enabled = false
+						end
+						if leftWeld then
+							leftWeld.Enabled = false
+						end
+					end)
+
+					if not ok then
+						warn("[antiblob] handler error:", err)
 					end
 				end)
 			elseif cons.antiblob then
 				cons.antiblob:Disconnect()
 				cons.antiblob = nil
 			end
-		end,
-	})
 
 	v27:AddToggle({
 		Name = "Perm ragdoll",
