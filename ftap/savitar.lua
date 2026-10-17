@@ -1,8 +1,11 @@
--- ===== compat shims (added by fix) =====
--- The whole main script is nested behind capability checks such as
--- `if queue_on_teleport then`, `if cloneref then`, `if clonefunction then`.
--- If the executor does not expose one of them the entire script silently does
--- nothing. Provide no-op / identity fallbacks so those guards always pass.
+local art = [[████████╗██████╗ ██████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗
+   ██║   ██████╔╝██████╔╝
+   ██║   ██╔══██╗██╔══██╗
+   ██║   ██║  ██║██████╔╝
+   ╚═╝   ╚═╝  ╚═╝╚═════╝]]
+
+print("|" .. (art:gsub("\n", "\n|")))
 queue_on_teleport = queue_on_teleport or function() end
 cloneref = cloneref or function(o) return o end
 clonefunction = clonefunction or function(f) return f end

@@ -1,3 +1,11 @@
+local art = [[████████╗██████╗ ██████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗
+   ██║   ██████╔╝██████╔╝
+   ██║   ██╔══██╗██╔══██╗
+   ██║   ██║  ██║██████╔╝
+   ╚═╝   ╚═╝  ╚═╝╚═════╝]]
+
+print("|" .. (art:gsub("\n", "\n|")))
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/"
 local DEFAULT_PALETTE = "Slate"
 local DEFAULT_RADIUS = 14

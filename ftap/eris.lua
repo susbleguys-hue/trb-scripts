@@ -1,3 +1,11 @@
+local art = [[████████╗██████╗ ██████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗
+   ██║   ██████╔╝██████╔╝
+   ██║   ██╔══██╗██╔══██╗
+   ██║   ██║  ██║██████╔╝
+   ╚═╝   ╚═╝  ╚═╝╚═════╝]]
+
+print("|" .. (art:gsub("\n", "\n|")))
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/"
 
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()

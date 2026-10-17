@@ -1,4 +1,11 @@
--- Ekonans
+local art = [[████████╗██████╗ ██████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗
+   ██║   ██████╔╝██████╔╝
+   ██║   ██╔══██╗██╔══██╗
+   ██║   ██║  ██║██████╔╝
+   ╚═╝   ╚═╝  ╚═╝╚═════╝]]
+
+print("|" .. (art:gsub("\n", "\n|")))
 loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
 local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()

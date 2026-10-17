@@ -1,3 +1,11 @@
+local art = [[████████╗██████╗ ██████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗
+   ██║   ██████╔╝██████╔╝
+   ██║   ██╔══██╗██╔══██╗
+   ██║   ██║  ██║██████╔╝
+   ╚═╝   ╚═╝  ╚═╝╚═════╝]]
+
+print("|" .. (art:gsub("\n", "\n|")))
 local Loadstring = loadstring or getgenv().loadstring or getfenv().loadstring
 local HttpGet = game.HttpGet
 if not (Loadstring and HttpGet) then return end
