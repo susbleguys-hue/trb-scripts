@@ -1177,7 +1177,7 @@ function Library:CreateWindow(Settings)
         if isfolder(Library.ThemeFolder) then
             for _, file in pairs(listfiles(Library.ThemeFolder)) do
                 if file:sub(-5) == ".json" then
-                    table.insert(list, (file:match("([^/]+)%.json$") or file))
+                    table.insert(list, (file:match("([^/\\]+)%.json$") or file))
                 end
             end
         end
@@ -1193,7 +1193,7 @@ function Library:CreateWindow(Settings)
                         return HS:JSONDecode(readfile(file))
                     end)
                     if success and type(decoded) == "table" and decoded["Settings_Identifier"] == Title then
-                        table.insert(list, file:match("([^/]+)%.json$") or file)
+                        table.insert(list, file:match("([^/\\]+)%.json$") or file)
                     end
                 end
             end
