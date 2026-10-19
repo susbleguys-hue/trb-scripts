@@ -1,19 +1,11 @@
---[=[
-	[[open source code]]
-	thanks for using pshade ultimate
+local art = [[████████╗██████╗ ██████╗ 
+╚══██╔══╝██╔══██╗██╔══██╗
+   ██║   ██████╔╝██████╔╝
+   ██║   ██╔══██╗██╔══██╗
+   ██║   ██║  ██║██████╔╝
+   ╚═╝   ╚═╝  ╚═╝╚═════╝]]
 
-	pshade is made by content creator on youtube called @Im_patrick feel free to subs
-
-	some code might be obfuscated for privacy or security reason (example : feedback)
-	this is not mean to be edited/stolen
-
-	This script is still in beta stage so make sure to use the loadstring so it can always be updated
-
-	https://randomstring0.github.io/pshade.github.io/
-
-	NOTE: rewritten with disk cache + parallel preload. Bump VERSION to bust cache.
-]=]
-
+print("|" .. (art:gsub("\n", "\n|")))
 if _G.pshade then return warn"pshade already loaded!" end
 if not game then local game=Workspace['Parent'] end
 if not game:IsLoaded() then game["Loaded"]:Wait() end
