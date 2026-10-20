@@ -764,22 +764,10 @@ function sendLines(player, lines, perMessage)
 end
 
 local commandHelp = {
-    '.chat (Target) (Text)',
-    '.bring (Target)',
-    '.kill (Target)',
-    '.kick (Target)',
-    '.freeze (Target)',
-    '.thaw (Target)',
-    '.spin (Target)',
+    '.spin',
     '.unspin',
-    '.fps (Target) (Cap)',
-    '.friend (Target)',
-    '.unfriend (Target)',
-    '.admin (Target)',
-    '.revoke (Target)',
-    '.reveal (Target) (All)',
+    '.fps (Cap)',
     '.credits',
-    '.blind (Target)',
     '.cmds',
 }
 local frozenPlayers = {}
@@ -869,12 +857,19 @@ function sendToChat(msg)
     end
 end
 function handleMessage(sender, text)
-    -- Remote chat commands disabled: nobody (including former hardcoded
-    -- admins) can control your client via chat. Early-out keeps the
-    -- listener wired so nothing downstream breaks.
-    return
-end
-if false then
+    -- Self-only chat commands: ONLY your own client processes these, and
+    -- only when YOU typed them. Strangers' messages are ignored entirely.
+    -- Remote-targeting commands (.kick/.kill/.bring/.freeze/.chat/.friend
+    -- etc.) were backdoor-era multi-client control and are permanently
+    -- removed. Only local/self commands remain below.
+    if not sender or sender ~= LocalPlayer then
+        return
+    end
+    if typeof(text) ~= 'string' or text == '' then
+        return
+    end
+
+    local _hm_ok, _hm_err = pcall(function()
     local args = {}
 
     for word in text:gmatch('%S+')do
@@ -886,176 +881,48 @@ if false then
     end
 
     local cmd = args[1]:lower()
-    local targets = resolveTargets(args[2])
 
-    if cmd == '.chat' then
-        local msg = table.concat(args, ' ', 3)
-
-        if msg ~= '' then
-            for _, target in ipairs(targets)do
-                if target == LocalPlayer then
-                    sendToChat(msg)
-                end
-            end
-        end
-    elseif cmd == '.kick' then
-        local reason = table.concat(args, ' ', 3)
-
-        if reason == '' then
-            reason = 'No Reason was applied.'
-        end
-
-        for _, target in ipairs(targets)do
-            local message = 'Kicked by: ' .. sender.DisplayName .. ' (@' .. sender.Name .. ')\n' .. 'Reason: ' .. reason
-
-            target:Kick(message)
-        end
-    elseif cmd == '.wither' then
-        witheringheights()
-    elseif cmd == '.kill' then
-        for _, target in ipairs(targets)do
-            local hum = target.Character and target.Character:FindFirstChildOfClass('Humanoid')
-
-            if hum then
-                hum.Health = 0
-            end
-        end
-    elseif cmd == '.bring' then
-        for _, target in ipairs(targets)do
-            local hrp = target.Character and target.Character:FindFirstChild('HumanoidRootPart')
-            local senderHRP = sender.Character and sender.Character:FindFirstChild('HumanoidRootPart')
-
-            if hrp and senderHRP then
-                hrp.CFrame = senderHRP.CFrame + Vector3.new(0, 0, - 3)
-
-                toggleBlock(target, true)
-                task.delay(1, function()
-                    toggleBlock(target, false)
-                end)
-            end
-        end
-    elseif cmd == '.spin' then
-        spin = true
-        spinTarget = targets[1]
-    elseif cmd == '.unspin' then
+    if cmd == '.unspin' then
         spin = false
         spinTarget = nil
+    elseif cmd == '.spin' then
+        -- Self-only: spins YOUR character around your current Target-tab
+        -- selection (first selected player). No chat target arg needed.
+        local pls = nil
+
+        pcall(function()
+            pls = game:GetService('Players')
+        end)
+        if typeof(pls) ~= 'Instance' then
+            pls = (typeof(Players) == 'Instance' and Players) or nil
+        end
+
+        local tgt = nil
+
+        if pls and _selectedPlayers and _selectedPlayers[1] then
+            pcall(function()
+                tgt = pls:FindFirstChild(_selectedPlayers[1])
+            end)
+        end
+        if tgt then
+            spin = true
+            spinTarget = tgt
+        end
     elseif cmd == '.fps' then
-        local cap = tonumber(args[3])
+        local cap = tonumber(args[2])
 
         if cap and setfpscap then
             setfpscap(cap)
         end
-    elseif cmd == '.fling' then
-        for _, target in ipairs(targets)do
-            local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild('HumanoidRootPart')
-            local tHRP = target.Character and target.Character:FindFirstChild('HumanoidRootPart')
-
-            if myHRP and tHRP then
-                myHRP.CFrame = tHRP.CFrame
-
-                task.wait()
-
-                myHRP.Velocity = Vector3.new(9999, 9999, 9999)
-            end
-        end
-    elseif cmd == '.freeze' then
-        for _, target in ipairs(targets)do
-            frozenPlayers[target] = true
-
-            freezePlayer(target, true)
-        end
-    elseif cmd == '.thaw' then
-        for _, target in ipairs(targets)do
-            frozenPlayers[target] = nil
-
-            freezePlayer(target, false)
-        end
-    elseif cmd == '.friend' then
-        for _, target in ipairs(targets)do
-            if target ~= LocalPlayer then
-                pcall(function()
-                    LocalPlayer:RequestFriendship(target)
-                    sendToChat('friended ' .. target.Name)
-                end)
-            end
-        end
-    elseif cmd == '.unfriend' then
-        for _, target in ipairs(targets)do
-            if LocalPlayer:IsFriendsWith(target.UserId)then
-                pcall(function()
-                    LocalPlayer:RevokeFriendship(target)
-                    sendToChat('unfriended ' .. target.Name)
-                end)
-            end
-        end
-    elseif cmd == '.admin' then
-        if senderRole ~= 'superadmin' then
-            return
-        end
-
-        for _, target in ipairs(targets)do
-            if target and not superAdmins[target.Name]then
-                tempAdmins[target.Name] = true
-
-                sendToChat(target.DisplayName .. ' (@' .. target.Name .. ') is now whitelisted')
-            end
-        end
-    elseif cmd == '.revoke' then
-        if senderRole ~= 'superadmin' then
-            return
-        end
-
-        for _, target in ipairs(targets)do
-            if tempAdmins[target.Name]then
-                tempAdmins[target.Name] = nil
-
-                sendToChat(target.DisplayName .. ' (@' .. target.Name .. ') is no longer whitelisted')
-            end
-        end
-    elseif cmd == '.exec' then
-        -- REMOVED: remote code execution backdoor (was: loadstring(chat code) on your client).
-        -- Silently ignore so old callers can't trigger anything.
-        return
     elseif cmd == '.cmds' then
-        local chunkSize = 4
-
-        for i = 1, #commandHelp, chunkSize do
-            local chunk = {}
-
-            for j = i, math.min(i + chunkSize - 1, #commandHelp)do
-                table.insert(chunk, commandHelp[j])
-            end
-
-            sendToChat(table.concat(chunk, '\n'))
-            task.wait(0.25)
-        end
-    elseif cmd == '.reveal' then
-        for _, target in ipairs(targets)do
-            if target == LocalPlayer then
-                sendToChat('Im an unstable user son')
-            end
-        end
-    elseif cmd == '.blind' then
-        for _, target in ipairs(targets)do
-            if target == LocalPlayer then
-                local gui = Instance.new('ScreenGui', game.CoreGui)
-                local frame = Instance.new('Frame', gui)
-
-                frame.Size = UDim2.new(1, 0, 1, 0)
-                frame.BackgroundColor3 = Color3.new(0, 0, 0)
-
-                task.delay(5, function()
-                    gui:Destroy()
-                end)
-            end
-        end
+        sendToChat(table.concat(commandHelp, ' | '))
     elseif cmd == '.credits' then
-        for _, target in ipairs(targets)do
-            if target == LocalPlayer then
-                sendToChat('CREDITS: created by Praise Ideas from: Oats, Marshel, DjDillywag, Terrence')
-            end
-        end
+        sendToChat('CREDITS: created by Praise Fixed by TheRealBlox Ideas from: Oats, Marshel, DjDillywag, Terrence')
+    end
+    end)
+
+    if not _hm_ok then
+        warn('[ChatCmd] ' .. tostring(_hm_err))
     end
 end
 
@@ -12264,6 +12131,24 @@ function getPlayerList()
         end
     end
 
+    -- Background warm-up: fetch thumbnails for everyone now so they're
+    -- already cached when you click them. Low priority, never blocks UI.
+    task.spawn(function()
+        task.wait(2)
+
+        for _, plr in ipairs(pls:GetPlayers())do
+            if plr ~= LocalPlayer and not _avatarThumbCache[plr.UserId] then
+                local ok, content = pcall(pls.GetUserThumbnailAsync, pls, plr.UserId, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size100x100)
+
+                if ok and content and content ~= '' then
+                    _avatarThumbCache[plr.UserId] = content
+                end
+
+                task.wait(0.2)
+            end
+        end
+    end)
+
     return list
 end
 function extractUsername(entry)
@@ -12388,6 +12273,7 @@ function getPlotRichText(player)
 end
 
 _currentAvatarUserId = nil
+_avatarThumbCache = {}
 
 function _updateAvatarDisplay()
     local pls = game:GetService('Players')
@@ -12411,14 +12297,33 @@ function _updateAvatarDisplay()
 
     _currentAvatarUserId = uid
 
+    -- Instant path: serve from cache, no network wait at all.
+    if _avatarThumbCache[uid] then
+        pcall(function()
+            AvatarImage:SetImage(_avatarThumbCache[uid])
+        end)
+
+        return
+    end
+
+    -- Show a placeholder immediately so the old avatar doesn't linger,
+    -- then fetch in the background (stale-guarded: if the user picked
+    -- someone else mid-fetch, the old result is discarded).
+    pcall(function()
+        AvatarImage:SetImage('rbxassetid://0')
+    end)
     task.spawn(function()
         local pls = game:GetService('Players')
-        local ok, content = pcall(pls.GetUserThumbnailAsync, pls, uid, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size420x420)
+        local ok, content = pcall(pls.GetUserThumbnailAsync, pls, uid, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size100x100)
 
         if ok and content and content ~= '' then
-            pcall(function()
-                AvatarImage:SetImage(content)
-            end)
+            _avatarThumbCache[uid] = content
+
+            if uid == _currentAvatarUserId then
+                pcall(function()
+                    AvatarImage:SetImage(content)
+                end)
+            end
         end
     end)
 end
@@ -21952,6 +21857,25 @@ ESPEnabled = {
 AutoRecoverEnabled = false
 RecoverCoroutine = nil
 
+function IsRecoverableAnchor(model, data)
+    if not model or not model.Parent then
+        return false
+    end
+    if not data or not data.PartAnchored then
+        return false
+    end
+    local part = data.PartAnchored
+
+    if not part.Parent or not part:IsA('BasePart') then
+        return false
+    end
+
+    if not model:GetAttribute('IsAnchored') then
+        return false
+    end
+
+    return true
+end
 function RecoverParts()
     while AutoRecoverEnabled do
         success, err = pcall(function()
@@ -21961,57 +21885,50 @@ function RecoverParts()
                 humanoidRootPart = character.HumanoidRootPart
 
                 for model, data in pairs(AnchoredObjects)do
+                    if not IsRecoverableAnchor(model, data) then
+                        continue
+                    end
                     coroutine.wrap(function()
-                        if model and data.PartAnchored then
-                            part = data.PartAnchored
-                            distance = (part.Position - humanoidRootPart.Position).Magnitude
+                        local part = data.PartAnchored
+                        local root = humanoidRootPart
+                        local partOwner = part:FindFirstChild('PartOwner')
 
-                            if distance > 30 then
-                                partOwner = part:FindFirstChild('PartOwner')
-
-                                if not partOwner or partOwner.Value ~= LocalPlayer.Name then
-                                    humanoidRootPart.CFrame = CFrame.new(part.Position + Vector3.new(0, 5, 0))
-
-                                    task.wait(0.1)
-                                    SetNetworkOwnerRE:FireServer(part, lookAt(humanoidRootPart.Position, part.Position))
-                                end
-                            else
-                                partOwner = part:FindFirstChild('PartOwner')
-
-                                if not partOwner or partOwner.Value ~= LocalPlayer.Name then
-                                    SetNetworkOwnerRE:FireServer(part, lookAt(humanoidRootPart.Position, part.Position))
-                                end
-                            end
+                        if partOwner and partOwner.Value == LocalPlayer.Name then
+                            return
                         end
+                        local distance = (part.Position - root.Position).Magnitude
+
+                        if distance > 30 then
+                            root.CFrame = CFrame.new(part.Position + Vector3.new(0, 5, 0))
+
+                            task.wait(0.1)
+                        end
+                        SetNetworkOwnerRE:FireServer(part, lookAt(root.Position, part.Position))
                     end)()
                 end
                 for _, groupData in ipairs(CompiledGroups)do
                     if groupData.primaryPart then
                         coroutine.wrap(function()
-                            primaryModel = groupData.primaryPart
+                            local primaryModel = groupData.primaryPart
 
                             if primaryModel then
-                                primaryPart = primaryModel.PrimaryPart or primaryModel:FindFirstChildOfClass('BasePart')
+                                local primaryPart = primaryModel.PrimaryPart or primaryModel:FindFirstChildOfClass('BasePart')
 
-                                if primaryPart then
-                                    distance = (primaryPart.Position - humanoidRootPart.Position).Magnitude
+                                if primaryPart and primaryPart.Parent and primaryPart:IsA('BasePart') and (primaryModel:GetAttribute('GluePrimary') or primaryModel:GetAttribute('IsAnchored')) then
+                                    local root = humanoidRootPart
+                                    local partOwner = primaryPart:FindFirstChild('PartOwner')
+
+                                    if partOwner and partOwner.Value == LocalPlayer.Name then
+                                        return
+                                    end
+                                    local distance = (primaryPart.Position - root.Position).Magnitude
 
                                     if distance > 30 then
-                                        partOwner = primaryPart:FindFirstChild('PartOwner')
+                                        root.CFrame = CFrame.new(primaryPart.Position + Vector3.new(0, 5, 0))
 
-                                        if not partOwner or partOwner.Value ~= LocalPlayer.Name then
-                                            humanoidRootPart.CFrame = CFrame.new(primaryPart.Position + Vector3.new(0, 5, 0))
-
-                                            task.wait(0.1)
-                                            SetNetworkOwnerRE:FireServer(primaryPart, lookAt(humanoidRootPart.Position, primaryPart.Position))
-                                        end
-                                    else
-                                        partOwner = primaryPart:FindFirstChild('PartOwner')
-
-                                        if not partOwner or partOwner.Value ~= LocalPlayer.Name then
-                                            SetNetworkOwnerRE:FireServer(primaryPart, lookAt(humanoidRootPart.Position, primaryPart.Position))
-                                        end
+                                        task.wait(0.1)
                                     end
+                                    SetNetworkOwnerRE:FireServer(primaryPart, lookAt(root.Position, primaryPart.Position))
                                 end
                             end
                         end)()
@@ -22460,6 +22377,12 @@ function RemoveCompileGroup(primaryPart)
                 item.model:SetAttribute('GluePrimary', false)
                 item.model:SetAttribute('IsAnchored', false)
                 RemoveESP(item.model, 'Group')
+
+                local anchorData = AnchoredObjects[item.model]
+
+                if anchorData then
+                    anchorData.PartAnchored = nil
+                end
             end
 
             table.remove(CompiledGroups, index)
