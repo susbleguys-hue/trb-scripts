@@ -1,4 +1,4 @@
--- Recovered Luau source by ZeroVector
+--by TRB
 local lib, tbl
 
 do
