@@ -6991,7 +6991,7 @@ task.spawn(function()
  end
 
 local Window = Library:CreateWindow({
- Title="meowlua private - discord.gg/meowwc", Center=true, AutoShow=true, TabPadding=8, MenuFadeTime=0.2, })
+ Title="meowlua crack by TRB not private anymore🤣", Center=true, AutoShow=true, TabPadding=8, MenuFadeTime=0.2, })
 local Tabs = {
  Movement=Window:AddTab("Movement"), Aggression=Window:AddTab("Aggression"), Defense=Window:AddTab("Defense"), Riot=Window:AddTab("Riot"), Character=Window:AddTab("Character"), Misc=Window:AddTab("Misc"), Settings=Window:AddTab("Settings"), }
 
