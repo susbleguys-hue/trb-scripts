@@ -170,9 +170,7 @@ local function runApplication()
     return control
 end
 
-print[[이 스크립트는 무료로 제공됩니다
-
-discord.gg/discord.gg/vKXWdGT8pc]]
+print("cracked by TRB https://github.com/susbleguys-hue/trb-scripts/tree/main")
 
 function Backend.initialize(data)
     local root = data[1]
