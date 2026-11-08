@@ -1,6 +1,15 @@
 <div align="center">
 
-# 🎮 TRB Scripts
+```text
+████████╗██████╗ ██████╗
+╚══██╔══╝██╔══██╗██╔══██╗
+   ██║   ██████╔╝██████╔╝
+   ██║   ██╔══██╗██╔══██╗
+   ██║   ██║  ██║██████╔╝
+   ╚═╝   ╚═╝  ╚═╝╚═════╝
+```
+
+# TRB Scripts
 
 **A community-collected collection of scripts organized by game and category.**
 
