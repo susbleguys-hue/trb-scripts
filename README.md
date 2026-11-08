@@ -1,0 +1,1 @@
+almost all of these scripts are opensrc,taken from a dc chanel and fixed by me, i am the only one who works on this project also i dont guarantee theres no stealers or info grabbers so use the scripts at your own risk
