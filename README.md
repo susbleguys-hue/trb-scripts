@@ -1,8 +1,9 @@
-<div align="center">
-
-  <img src="https://raw.githubusercontent.com/susbleguys-hue/trb-scripts/main/.github/assets/trb-banner.png" alt="TRB Scripts banner" width="900" />
-
-  <h1>TRB Scripts</h1>
+████████╗██████╗ ██████╗      ██████╗ ██████╗██████╗ ████████╗██████╗ ████████╗ ██████╗
+╚══██╔══╝██╔══██╗██╔══██╗    ██╔════╝██╔════╝██╔══██╗╚══██╔══╝██╔══██╗╚══██╔══╝██╔════╝
+   ██║   ██████╔╝██████╔╝    ╚█████╗ ██║     ██████╔╝   ██║   ██████╔╝   ██║   ╚█████╗
+   ██║   ██╔══██╗██╔══██╗     ╚═══██╗██║     ██╔══██╗   ██║   ██╔═══╝    ██║    ╚═══██╗
+   ██║   ██║  ██║██████╔╝    ██████╔╝╚██████╗██║  ██║███████╗ ██║        ██║   ██████╔╝
+   ╚═╝   ╚═╝  ╚═╝╚═════╝     ╚═════╝  ╚═════╝╚═╝  ╚═╝╚══════╝ ╚═╝        ╚═╝   ╚═════╝
 
   <p>
     A community-collected collection of Lua scripts, organized by game and category.
