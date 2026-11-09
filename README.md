@@ -69,32 +69,6 @@ Scripts may be marked with the following labels:
 
 Use the folders above to browse the collection. Individual files may include more specific notes about their contents, compatibility, or usage.
 
-## Repository Structure
-
-```text
-trb-scripts/
-├── axelhub/
-├── bladeball/
-├── bloxfruits/
-├── bloxstrike/
-├── brookhaven/
-├── doors/
-├── fixedlibs/
-├── ftap/
-├── gag/
-├── gag2/
-├── mm2/
-├── multigame/
-├── random/
-├── rivals/
-├── sniperarena/
-├── src/
-├── universal/
-├── README.md
-├── LICENSE
-└── ...
-```
-
 ## Important Notes
 
 - These scripts are provided as-is for educational and personal use.
