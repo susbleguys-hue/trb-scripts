@@ -98,9 +98,6 @@ Credits to TRB. The original work belongs to its respective creators. Some scrip
 
 This repository is distributed under the terms of the included MIT license. See the `LICENSE` file for details.
 
----
-
-Made for script sharing and community collection. Browse the folders, test carefully, and use responsibly.
 ##checks
 pshade - [![Reviewed on ScriptBlox](https://scriptblox.com/badge/Universal-Script-Pshade-4.5.0-231197)](https://scriptblox.com/script/Universal-Script-Pshade-4.5.0-231197)
 
